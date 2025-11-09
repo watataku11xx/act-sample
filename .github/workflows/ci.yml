@@ -5,10 +5,28 @@ on:
   pull_request:
 
 jobs:
-  say-hello:
+  check-pr-diff:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Echo hello
-        run: echo "hello,world"
+        with:
+          fetch-depth: 0  # 全履歴を取得してdiffを正確に取得するため
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+
+      - name: Show current branch info
+        run: |
+          echo "Current branch (HEAD): ${{ github.head_ref }}"
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "PR number: ${{ github.event.pull_request.number }}"
+          echo "Base SHA: ${{ github.event.pull_request.base.sha }}"
+          echo "Head SHA: ${{ github.event.pull_request.head.sha }}"
+
+      - name: Show diff between base and head
+        run: |
+          echo "=== Diff between ${{ github.base_ref }} (${{ github.event.pull_request.base.sha }}) and ${{ github.head_ref }} (${{ github.event.pull_request.head.sha }}) ==="
+          git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
