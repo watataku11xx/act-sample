@@ -1,0 +1,15 @@
+# Act / local CI
+.secrets
+.act/
+
+# Node
+node_modules/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
