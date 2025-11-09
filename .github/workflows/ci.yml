@@ -16,7 +16,10 @@ jobs:
 
       - name: Fetch base branch
         run: |
-          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+          # ベースブランチが指定されている場合はフェッチ
+          if [ -n "${{ github.base_ref }}" ]; then
+            git fetch origin ${{ github.base_ref }}:${{ github.base_ref }} || true
+          fi
 
       - name: Show current branch info
         run: |
@@ -28,5 +31,29 @@ jobs:
 
       - name: Show diff between base and head
         run: |
-          echo "=== Diff between ${{ github.base_ref }} (${{ github.event.pull_request.base.sha }}) and ${{ github.head_ref }} (${{ github.event.pull_request.head.sha }}) ==="
-          git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+          # GitHub Actions環境ではPRのSHAを使用、act環境ではブランチ名を使用
+          if [ -n "${{ github.event.pull_request.base.sha }}" ] && [ -n "${{ github.event.pull_request.head.sha }}" ]; then
+            echo "=== Diff between ${{ github.base_ref }} (${{ github.event.pull_request.base.sha }}) and ${{ github.head_ref }} (${{ github.event.pull_request.head.sha }}) ==="
+            git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+          else
+            # act環境でのフォールバック: 現在のブランチとベースブランチのdiff
+            BASE_BRANCH="${{ github.base_ref }}"
+            # ベースブランチが空の場合はmainまたはmasterを試す
+            if [ -z "$BASE_BRANCH" ]; then
+              if git show-ref --verify --quiet refs/heads/main || git show-ref --verify --quiet refs/remotes/origin/main; then
+                BASE_BRANCH="main"
+              else
+                BASE_BRANCH="master"
+              fi
+            fi
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            echo "=== Diff between $BASE_BRANCH and $CURRENT_BRANCH (act環境) ==="
+            git fetch origin $BASE_BRANCH:$BASE_BRANCH 2>/dev/null || true
+            if git show-ref --verify --quiet refs/heads/$BASE_BRANCH; then
+              git diff $BASE_BRANCH...HEAD
+            elif git show-ref --verify --quiet refs/remotes/origin/$BASE_BRANCH; then
+              git diff origin/$BASE_BRANCH...HEAD
+            else
+              echo "ベースブランチ $BASE_BRANCH が見つかりませんでした"
+            fi
+          fi
