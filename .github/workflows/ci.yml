@@ -1,7 +1,6 @@
 name: CI
 
 on:
-  push:
   pull_request:
 
 jobs:
@@ -73,3 +72,41 @@ jobs:
               echo "ベースブランチ $BASE_BRANCH が見つかりませんでした"
             fi
           fi
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: act-sample
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: act-sample
+        run: npm run lint
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: act-sample
+        run: npm ci
+
+      - name: Build
+        working-directory: act-sample
+        run: npm run build
