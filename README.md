@@ -17,7 +17,8 @@
 - 一覧表示: `act -l`
 - ドライラン: `act -n`
 - `push` イベント相当を実行: `act push`
-- 特定ジョブのみ実行: `act -j build-test`
+- `pull_request` イベント相当を実行: `act pull_request`
+- 特定ジョブのみ実行: `act -j check-pr-diff`
 - シークレットを読み込んで実行: `act --secret-file .secrets push`
 
 ## ワークフローの内容（概要）
